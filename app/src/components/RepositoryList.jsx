@@ -11,13 +11,9 @@ const styles = StyleSheet.create({
 const ItemSeparator = () => <View style={styles.separator} />;
 
 export const RepositoryListContainer = ({ repositories }) => {
-  const repositoryNodes = repositories
-    ? repositories.map((n) => n)
-    : [];
-
   return (
     <FlatList
-      data={repositoryNodes}
+      data={repositories}
       ItemSeparatorComponent={ItemSeparator}
       renderItem={({ item }) => <RepositoryItem item={item} />}
     />
