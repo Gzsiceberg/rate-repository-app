@@ -1,4 +1,4 @@
-import { View, Image, StyleSheet } from 'react-native';
+import { View, Image, StyleSheet, Pressable, Linking } from 'react-native';
 import Text from './Text';
 import theme from '../theme';
 
@@ -38,6 +38,13 @@ const styles = StyleSheet.create({
   },
   marginBottom: {
     marginBottom: 5,
+  },
+  githubButton: {
+    marginTop: 15,
+    backgroundColor: theme.colors.primary,
+    padding: 12,
+    borderRadius: 5,
+    alignItems: 'center',
   },
 });
 
@@ -90,8 +97,8 @@ const RepositoryStats = ({ stars, forks, reviews, rating }) => (
   </View>
 );
 
-const RepositoryItem = ({ item }) => {
-  return (
+const RepositoryItem = ({ item, showGithubButton = false, onPress }) => {
+  const content = (
     <View style={styles.container} testID="repositoryItem">
       <View style={styles.topContainer}>
         <Avatar uri={item.ownerAvatarUrl} />
@@ -107,8 +114,34 @@ const RepositoryItem = ({ item }) => {
         reviews={item.reviewCount}
         rating={item.ratingAverage}
       />
+      {showGithubButton && item?.url ? (
+        <Pressable
+          accessibilityRole="button"
+          style={styles.githubButton}
+          testID="repositoryGithubButton"
+          onPress={() => Linking.openURL(item.url)}
+        >
+          <Text color="white" fontWeight="bold">
+            Open in GitHub
+          </Text>
+        </Pressable>
+      ) : null}
     </View>
   );
+
+  if (onPress) {
+    return (
+      <Pressable
+        accessibilityRole="button"
+        onPress={onPress}
+        testID={`repositoryItemPressable-${item.id}`}
+      >
+        {content}
+      </Pressable>
+    );
+  }
+
+  return content;
 };
 
 export default RepositoryItem;
