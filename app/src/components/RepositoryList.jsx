@@ -5,18 +5,31 @@ import { useNavigate } from 'react-router-native';
 import RepositoryItem from './RepositoryItem';
 import useRepositories from '../hooks/useRepositories';
 import theme from '../theme';
+import Text from './Text';
 
 const styles = StyleSheet.create({
   separator: {
     height: 10,
   },
   header: {
-    backgroundColor: theme.colors.white,
     paddingHorizontal: 15,
-    paddingVertical: 5,
+    paddingTop: 10,
+    paddingBottom: 15,
+    backgroundColor: theme.colors.mainBackground,
+  },
+  headerLabel: {
+    marginBottom: 8,
+  },
+  pickerContainer: {
+    backgroundColor: theme.colors.white,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#d0d7de',
+    overflow: 'hidden',
   },
   picker: {
     color: theme.colors.textPrimary,
+    height: 48,
   },
 });
 
@@ -77,19 +90,24 @@ const RepositoryList = () => {
 
   const header = (
     <View style={styles.header}>
-      <Picker
-        selectedValue={ordering}
-        onValueChange={(value) => setOrdering(value)}
-        style={styles.picker}
-      >
-        {orderingOptions.map((option) => (
-          <Picker.Item
-            key={option.value}
-            label={option.label}
-            value={option.value}
-          />
-        ))}
-      </Picker>
+      <Text fontWeight="bold" style={styles.headerLabel}>
+        Order by
+      </Text>
+      <View style={styles.pickerContainer}>
+        <Picker
+          selectedValue={ordering}
+          onValueChange={(value) => setOrdering(value)}
+          style={styles.picker}
+        >
+          {orderingOptions.map((option) => (
+            <Picker.Item
+              key={option.value}
+              label={option.label}
+              value={option.value}
+            />
+          ))}
+        </Picker>
+      </View>
     </View>
   );
 
