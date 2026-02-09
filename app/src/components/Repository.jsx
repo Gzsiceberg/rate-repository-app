@@ -66,12 +66,11 @@ const Repository = () => {
   const {
     repository,
     reviews,
-    loading,
     fetchMore,
     hasNextPage,
   } = useRepository(id);
 
-  if (loading || !repository) {
+  if (!repository) {
     return null;
   }
 
