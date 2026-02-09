@@ -224,7 +224,6 @@ export class RepositoryListContainer extends React.Component {
       repositories,
       onPressItem,
       onEndReach,
-      loadingMore,
     } = this.props;
 
     return (
@@ -232,13 +231,6 @@ export class RepositoryListContainer extends React.Component {
         data={repositories}
         ItemSeparatorComponent={ItemSeparator}
         ListHeaderComponent={this.renderHeader}
-        ListFooterComponent={
-          loadingMore ? (
-            <View style={styles.listFooter}>
-              <ActivityIndicator />
-            </View>
-          ) : null
-        }
         renderItem={({ item }) => (
           <RepositoryItem
             item={item}
@@ -296,7 +288,6 @@ const RepositoryList = () => {
       searchKeyword={searchKeyword}
       onSearchKeywordChange={setSearchKeyword}
       onEndReach={onEndReach}
-      loadingMore={loading}
     />
   );
 };
