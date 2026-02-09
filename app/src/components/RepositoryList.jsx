@@ -1,6 +1,12 @@
 import React, { useState } from 'react';
-import { FlatList, View, StyleSheet, TextInput } from 'react-native';
-import { Picker } from '@react-native-picker/picker';
+import {
+  FlatList,
+  View,
+  StyleSheet,
+  TextInput,
+  Pressable,
+  Modal,
+} from 'react-native';
 import { useNavigate } from 'react-router-native';
 import { useDebounce } from 'use-debounce';
 import RepositoryItem from './RepositoryItem';
@@ -38,9 +44,50 @@ const styles = StyleSheet.create({
     borderColor: '#d0d7de',
     overflow: 'hidden',
   },
-  picker: {
+  orderButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+  },
+  orderButtonText: {
     color: theme.colors.textPrimary,
-    height: 48,
+    fontSize: theme.fontSizes.body,
+  },
+  orderButtonCaret: {
+    color: theme.colors.textSecondary,
+    fontSize: theme.fontSizes.subheading,
+  },
+  modalBackdrop: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0, 0, 0, 0.35)',
+  },
+  backdropPressable: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  modalSheet: {
+    backgroundColor: theme.colors.white,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    paddingVertical: 8,
+    paddingBottom: 16,
+  },
+  modalTitle: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  optionButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+  },
+  optionText: {
+    fontSize: theme.fontSizes.body,
+    color: theme.colors.textPrimary,
+  },
+  optionTextSelected: {
+    fontWeight: theme.fontWeights.bold,
   },
 });
 
@@ -67,23 +114,80 @@ const RepositoryListHeader = ({
     <Text fontWeight="bold" style={styles.headerLabel}>
       Order by
     </Text>
-    <View style={styles.pickerContainer}>
-      <Picker
-        selectedValue={ordering}
-        onValueChange={onOrderingChange}
-        style={styles.picker}
-      >
-        {orderingOptions.map((option) => (
-          <Picker.Item
-            key={option.value}
-            label={option.label}
-            value={option.value}
-          />
-        ))}
-      </Picker>
-    </View>
+    <OrderBySelect
+      ordering={ordering}
+      onOrderingChange={onOrderingChange}
+    />
   </View>
 );
+
+const OrderBySelect = ({ ordering, onOrderingChange }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const selectedOption = orderingOptions.find(
+    (option) => option.value === ordering
+  );
+
+  const handleSelect = (value) => {
+    onOrderingChange(value);
+    setIsOpen(false);
+  };
+
+  return (
+    <>
+      <View style={styles.pickerContainer}>
+        <Pressable
+          onPress={() => setIsOpen(true)}
+          style={styles.orderButton}
+          accessibilityRole="button"
+          accessibilityLabel="Order by"
+        >
+          <Text style={styles.orderButtonText}>
+            {selectedOption ? selectedOption.label : 'Select ordering'}
+          </Text>
+        </Pressable>
+      </View>
+      <Modal
+        transparent
+        animationType="slide"
+        visible={isOpen}
+        onRequestClose={() => setIsOpen(false)}
+      >
+        <View style={styles.modalBackdrop}>
+          <Pressable
+            style={styles.backdropPressable}
+            onPress={() => setIsOpen(false)}
+          />
+          <View style={styles.modalSheet}>
+            <Text fontWeight="bold" style={styles.modalTitle}>
+              Order by
+            </Text>
+            {orderingOptions.map((option) => {
+              const isSelected = option.value === ordering;
+              return (
+                <Pressable
+                  key={option.value}
+                  onPress={() => handleSelect(option.value)}
+                  style={styles.optionButton}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: isSelected }}
+                >
+                  <Text
+                    style={[
+                      styles.optionText,
+                      isSelected && styles.optionTextSelected,
+                    ]}
+                  >
+                    {option.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        </View>
+      </Modal>
+    </>
+  );
+};
 
 export class RepositoryListContainer extends React.Component {
   handlePressItem = (item) => {
