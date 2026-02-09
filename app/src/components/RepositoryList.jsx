@@ -6,6 +6,7 @@ import {
   TextInput,
   Pressable,
   Modal,
+  ActivityIndicator,
 } from 'react-native';
 import { useNavigate } from 'react-router-native';
 import { useDebounce } from 'use-debounce';
@@ -17,6 +18,9 @@ import Text from './Text';
 const styles = StyleSheet.create({
   separator: {
     height: 10,
+  },
+  listFooter: {
+    paddingVertical: 16,
   },
   header: {
     paddingHorizontal: 15,
@@ -216,19 +220,33 @@ export class RepositoryListContainer extends React.Component {
   };
 
   render() {
-    const { repositories, onPressItem } = this.props;
+    const {
+      repositories,
+      onPressItem,
+      onEndReach,
+      loadingMore,
+    } = this.props;
 
     return (
       <FlatList
         data={repositories}
         ItemSeparatorComponent={ItemSeparator}
         ListHeaderComponent={this.renderHeader}
+        ListFooterComponent={
+          loadingMore ? (
+            <View style={styles.listFooter}>
+              <ActivityIndicator />
+            </View>
+          ) : null
+        }
         renderItem={({ item }) => (
           <RepositoryItem
             item={item}
             onPress={onPressItem ? () => this.handlePressItem(item) : undefined}
           />
         )}
+        onEndReached={onEndReach}
+        onEndReachedThreshold={0.5}
       />
     );
   }
@@ -253,15 +271,20 @@ const RepositoryList = () => {
   const [ordering, setOrdering] = useState('latest');
   const [searchKeyword, setSearchKeyword] = useState('');
   const [debouncedSearchKeyword] = useDebounce(searchKeyword, 500);
-  const { repositories } = useRepositories({
+  const { repositories, fetchMore, loading } = useRepositories({
     orderBy: ordering === 'latest' ? 'CREATED_AT' : 'RATING_AVERAGE',
     orderDirection: ordering === 'lowest' ? 'ASC' : 'DESC',
     searchKeyword: debouncedSearchKeyword,
+    first: 3,
   });
   const navigate = useNavigate();
 
   const onPressItem = (id) => {
     navigate(`/repositories/${id}`);
+  };
+
+  const onEndReach = () => {
+    fetchMore();
   };
 
   return (
@@ -272,6 +295,8 @@ const RepositoryList = () => {
       onOrderingChange={setOrdering}
       searchKeyword={searchKeyword}
       onSearchKeywordChange={setSearchKeyword}
+      onEndReach={onEndReach}
+      loadingMore={loading}
     />
   );
 };
