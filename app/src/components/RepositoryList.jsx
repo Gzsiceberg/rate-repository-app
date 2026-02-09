@@ -1,7 +1,8 @@
-import { FlatList, View, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { FlatList, View, StyleSheet, TextInput } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
-import { useState } from 'react';
 import { useNavigate } from 'react-router-native';
+import { useDebounce } from 'use-debounce';
 import RepositoryItem from './RepositoryItem';
 import useRepositories from '../hooks/useRepositories';
 import theme from '../theme';
@@ -20,6 +21,16 @@ const styles = StyleSheet.create({
   headerLabel: {
     marginBottom: 8,
   },
+  searchInput: {
+    borderWidth: 1,
+    borderColor: '#d0d7de',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 8,
+    marginBottom: 12,
+    fontSize: theme.fontSizes.body,
+    backgroundColor: theme.colors.white,
+  },
   pickerContainer: {
     backgroundColor: theme.colors.white,
     borderRadius: 8,
@@ -35,31 +46,89 @@ const styles = StyleSheet.create({
 
 const ItemSeparator = () => <View style={styles.separator} />;
 
-export const RepositoryListContainer = ({
-  repositories,
-  onPressItem,
-  listHeaderComponent,
-}) => {
-  const handlePressItem = (item) => {
+const RepositoryListHeader = ({
+  ordering,
+  onOrderingChange,
+  searchKeyword,
+  onSearchKeywordChange,
+}) => (
+  <View style={styles.header}>
+    <Text fontWeight="bold" style={styles.headerLabel}>
+      Search
+    </Text>
+    <TextInput
+      value={searchKeyword}
+      onChangeText={onSearchKeywordChange}
+      placeholder="Filter repositories..."
+      style={styles.searchInput}
+      autoCorrect={false}
+      autoCapitalize="none"
+    />
+    <Text fontWeight="bold" style={styles.headerLabel}>
+      Order by
+    </Text>
+    <View style={styles.pickerContainer}>
+      <Picker
+        selectedValue={ordering}
+        onValueChange={onOrderingChange}
+        style={styles.picker}
+      >
+        {orderingOptions.map((option) => (
+          <Picker.Item
+            key={option.value}
+            label={option.label}
+            value={option.value}
+          />
+        ))}
+      </Picker>
+    </View>
+  </View>
+);
+
+export class RepositoryListContainer extends React.Component {
+  handlePressItem = (item) => {
+    const { onPressItem } = this.props;
     if (onPressItem) {
       onPressItem(item.id);
     }
   };
 
-  return (
-    <FlatList
-      data={repositories}
-      ItemSeparatorComponent={ItemSeparator}
-      ListHeaderComponent={listHeaderComponent}
-      renderItem={({ item }) => (
-        <RepositoryItem
-          item={item}
-          onPress={onPressItem ? () => handlePressItem(item) : undefined}
-        />
-      )}
-    />
-  );
-};
+  renderHeader = () => {
+    const {
+      ordering,
+      onOrderingChange,
+      searchKeyword,
+      onSearchKeywordChange,
+    } = this.props;
+
+    return (
+      <RepositoryListHeader
+        ordering={ordering}
+        onOrderingChange={onOrderingChange}
+        searchKeyword={searchKeyword}
+        onSearchKeywordChange={onSearchKeywordChange}
+      />
+    );
+  };
+
+  render() {
+    const { repositories, onPressItem } = this.props;
+
+    return (
+      <FlatList
+        data={repositories}
+        ItemSeparatorComponent={ItemSeparator}
+        ListHeaderComponent={this.renderHeader}
+        renderItem={({ item }) => (
+          <RepositoryItem
+            item={item}
+            onPress={onPressItem ? () => this.handlePressItem(item) : undefined}
+          />
+        )}
+      />
+    );
+  }
+}
 
 const orderingOptions = [
   {
@@ -78,9 +147,12 @@ const orderingOptions = [
 
 const RepositoryList = () => {
   const [ordering, setOrdering] = useState('latest');
+  const [searchKeyword, setSearchKeyword] = useState('');
+  const [debouncedSearchKeyword] = useDebounce(searchKeyword, 500);
   const { repositories } = useRepositories({
     orderBy: ordering === 'latest' ? 'CREATED_AT' : 'RATING_AVERAGE',
     orderDirection: ordering === 'lowest' ? 'ASC' : 'DESC',
+    searchKeyword: debouncedSearchKeyword,
   });
   const navigate = useNavigate();
 
@@ -88,34 +160,14 @@ const RepositoryList = () => {
     navigate(`/repositories/${id}`);
   };
 
-  const header = (
-    <View style={styles.header}>
-      <Text fontWeight="bold" style={styles.headerLabel}>
-        Order by
-      </Text>
-      <View style={styles.pickerContainer}>
-        <Picker
-          selectedValue={ordering}
-          onValueChange={(value) => setOrdering(value)}
-          style={styles.picker}
-        >
-          {orderingOptions.map((option) => (
-            <Picker.Item
-              key={option.value}
-              label={option.label}
-              value={option.value}
-            />
-          ))}
-        </Picker>
-      </View>
-    </View>
-  );
-
   return (
     <RepositoryListContainer
       repositories={repositories}
       onPressItem={onPressItem}
-      listHeaderComponent={header}
+      ordering={ordering}
+      onOrderingChange={setOrdering}
+      searchKeyword={searchKeyword}
+      onSearchKeywordChange={setSearchKeyword}
     />
   );
 };
